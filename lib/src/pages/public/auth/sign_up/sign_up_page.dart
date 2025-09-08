@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/src/service/users/users_service.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:my_app/src/service/core/auth_service.dart';
 
-class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<SignupPage> createState() => SignupPageState();
+  State<SignUpPage> createState() => SignUpPageState();
 }
 
-class SignupPageState extends State<SignupPage> {
+class SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final _addUserService = AddUserService();
+  final _authService = AuthService();
 
   Future<void> _handleSignUp() async {
     if (!(_formKey.currentState?.saveAndValidate() ?? false)) {
@@ -25,31 +25,45 @@ class SignupPageState extends State<SignupPage> {
 
     final formData = _formKey.currentState!.value;
 
-    await _addUserService.addUser({
-      'email': formData['email'],
-      'username': formData['username'],
-      'password': formData['password'],
-    });
+    try {
+      await _authService.register(
+        formData['email'],
+        formData['password'],
+      );
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Signed up!\nEmail: ${formData['email']}\nUsername: ${formData['username']}',
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Signed up!\nEmail: ${formData['email']}\nUsername: ${formData['username']}',
+          ),
+          duration: const Duration(seconds: 3),
         ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+      );
 
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    Navigator.of(context).pop();
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Sign up failed: ${e.toString()}")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
+      appBar: AppBar(
+        title: const Text('Sign Up'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FormBuilder(

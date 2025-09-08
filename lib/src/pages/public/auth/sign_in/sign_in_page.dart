@@ -3,14 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:my_app/src/service/core/auth_service.dart';
 import 'package:provider/provider.dart';
 
-class SigninPage extends StatefulWidget {
-  const SigninPage({super.key});
+class SignInPage extends StatefulWidget {
+  const SignInPage({super.key});
 
   @override
-  State<SigninPage> createState() => _SigninPageState();
+  State<SignInPage> createState() => _SignInPageState();
 }
 
-class _SigninPageState extends State<SigninPage> {
+class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
