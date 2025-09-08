@@ -29,13 +29,14 @@ class SignUpPageState extends State<SignUpPage> {
       await _authService.register(
         formData['email'],
         formData['password'],
+        formData['name'],
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Signed up!\nEmail: ${formData['email']}\nUsername: ${formData['username']}',
+            'Signed up!\nEmail: ${formData['email']}\nName: ${formData['name']}',
           ),
           duration: const Duration(seconds: 3),
         ),
@@ -83,15 +84,6 @@ class SignUpPageState extends State<SignUpPage> {
               ),
               const SizedBox(height: 16),
               FormBuilderTextField(
-                name: 'username',
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  border: OutlineInputBorder(),
-                ),
-                validator: FormBuilderValidators.required(),
-              ),
-              const SizedBox(height: 16),
-              FormBuilderTextField(
                 name: 'password',
                 decoration: const InputDecoration(
                   labelText: 'Password',
@@ -102,6 +94,15 @@ class SignUpPageState extends State<SignUpPage> {
                   FormBuilderValidators.required(),
                   FormBuilderValidators.minLength(6),
                 ]),
+              ),
+              const SizedBox(height: 16),
+              FormBuilderTextField(
+                name: 'name',
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: FormBuilderValidators.required(),
               ),
               const SizedBox(height: 24),
               ElevatedButton(

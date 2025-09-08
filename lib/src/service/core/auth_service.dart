@@ -31,7 +31,7 @@ class AuthService {
     return null;
   }
 
-  Future<void> register(String email, String password) async {
+  Future<void> register(String email, String password, String name) async {
     await Future.delayed(const Duration(seconds: 1));
 
     for (final user in _users) {
@@ -40,7 +40,7 @@ class AuthService {
       }
     }
 
-    final newUser = User(email: email, password: password, name: 'New User');
+    final newUser = User(email: email, password: password, name: name);
     _users.add(newUser);
     _currentUser = newUser;
   }
