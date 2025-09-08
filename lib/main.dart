@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:my_app/src/app.dart';
 import 'package:my_app/src/service/core/auth_service.dart';
+import 'package:my_app/src/service/core/config_service.dart';
+
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
@@ -16,7 +18,10 @@ Future<void> main() async {
 
   runApp(
     MultiProvider(
-      providers: [Provider<AuthService>(create: (_) => AuthService())],
+      providers: [
+        Provider<AuthService>(create: (_) => AuthService()),
+        ChangeNotifierProvider<ConfigService>(create: (_) => ConfigService()),
+      ],
       child: const MyApp(),
     ),
   );
