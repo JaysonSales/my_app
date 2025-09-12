@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart';
 
 class CalculatorPage extends StatefulWidget {
-  const CalculatorPage({super.key});
+  final User user;
+  const CalculatorPage({super.key, required this.user});
 
   @override
   State<CalculatorPage> createState() => _CalculatorPageState();
@@ -16,7 +18,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
   void _buttonPressed(String buttonText) {
     if (buttonText == 'C') {
       _clear();
-    } else if (buttonText == '+' || buttonText == '-' || buttonText == '*' || buttonText == '/') {
+    } else if (buttonText == '+' ||
+        buttonText == '-' ||
+        buttonText == '*' ||
+        buttonText == '/') {
       _handleOperator(buttonText);
     } else if (buttonText == '=') {
       _calculate();
@@ -117,7 +122,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
               alignment: Alignment.bottomRight,
               child: Text(
                 _output,
-                style: const TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 48.0,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:my_app/src/service/core/config_service.dart';
+import 'package:my_app/src/provider/core/config_provider.dart';
 
 class MaintenancePage extends StatelessWidget {
   const MaintenancePage({super.key});

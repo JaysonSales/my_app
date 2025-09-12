@@ -8,7 +8,9 @@ final errorRoutes = <RouteBase>[
   GoRoute(
     path: '/500',
     builder: (BuildContext context, GoRouterState state) {
-      return const InternalServerPage();
+      return const InternalServerPage(
+        message: "An unexpected error occurred. Please try again later.",
+      );
     },
   ),
   GoRoute(

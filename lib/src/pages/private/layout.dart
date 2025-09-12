@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'sidebar.dart';
+import 'package:my_app/src/pages/private/sidebar.dart';
 
 class PrivateLayout extends StatelessWidget {
   final Widget child;
@@ -9,11 +9,12 @@ class PrivateLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(title, style: const TextStyle(color: Colors.white)),
-        backgroundColor: Colors.deepPurple,
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(title, style: theme.textTheme.titleMedium),
+        backgroundColor: theme.appBarTheme.backgroundColor,
+        iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
       ),
       drawer: const SideBar(),
       body: child,

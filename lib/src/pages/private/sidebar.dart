@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_app/src/widgets/core/app_name.dart';
 import 'package:provider/provider.dart';
-import 'package:my_app/src/service/core/auth_service.dart';
+import 'package:my_app/src/widgets/core/app_name.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart';
 
 class SideBar extends StatelessWidget {
   const SideBar({super.key});
@@ -10,35 +10,59 @@ class SideBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appName = AppName();
+    final theme = Theme.of(context);
+
+    final currentRoute = GoRouterState.of(context).uri.toString();
+
+    Widget buildMenuItem({
+      required IconData icon,
+      required String label,
+      required String route,
+    }) {
+      final isSelected = currentRoute == route;
+
+      return ListTile(
+        leading: Icon(
+          icon,
+          color: isSelected ? theme.colorScheme.primary : null,
+        ),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? theme.colorScheme.primary : null,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        tileColor: isSelected
+            ? theme.colorScheme.primary.withValues(alpha: 0.1)
+            : null,
+        enabled: !isSelected,
+        onTap: isSelected
+            ? null
+            : () {
+                context.go(route);
+              },
+      );
+    }
 
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            decoration: const BoxDecoration(color: Colors.deepPurple),
+            decoration: BoxDecoration(color: theme.appBarTheme.backgroundColor),
             child: appName,
           ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () {
-              context.go('/home');
-            },
+          buildMenuItem(icon: Icons.home, label: 'Home', route: '/home'),
+          buildMenuItem(
+            icon: Icons.calculate,
+            label: 'Calculator',
+            route: '/calculator',
           ),
-          ListTile(
-            leading: const Icon(Icons.calculate),
-            title: const Text('Calculator'),
-            onTap: () {
-              context.go('/calculator');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              context.pop();
-            },
+          buildMenuItem(
+            icon: Icons.settings,
+            label: 'Settings',
+            route: '/settings',
           ),
           const Divider(),
           ListTile(

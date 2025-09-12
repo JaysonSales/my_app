@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_app/src/service/core/auth_service.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 class SignInPage extends StatefulWidget {
@@ -11,8 +11,8 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: "jayson");
+  final _passwordController = TextEditingController(text: "kahitano");
   bool _isLoading = false;
 
   Future<void> _login() async {
@@ -54,7 +54,6 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign In')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -79,22 +78,16 @@ class _SignInPageState extends State<SignInPage> {
                 ElevatedButton(onPressed: _login, child: const Text('Sign In')),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () {
-                  context.go('/signup');
-                },
+                onPressed: () => context.go('/signup'),
                 child: const Text("Don't have an account? Sign Up"),
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () {
-                  context.go('/home');
-                },
-                child: const Text("try to bypass to /home"),
+                onPressed: () => context.go('/calculator'),
+                child: const Text("try to bypass to private pages"),
               ),
               TextButton(
-                onPressed: () {
-                  context.go('/random_link_to_404');
-                },
+                onPressed: () => context.go('/random_link_to_404'),
                 child: const Text("random link to 404"),
               ),
             ],

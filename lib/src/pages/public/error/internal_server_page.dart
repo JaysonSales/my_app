@@ -1,35 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class InternalServerPage extends StatelessWidget {
-  const InternalServerPage({super.key});
+  final String message;
+  const InternalServerPage({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Internal Server Error"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Internal Server Error")),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 100),
-            const SizedBox(height: 20),
-            const Text(
-              "500 - Internal Server Error",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text("Oops! Something went wrong on our end."),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () => context.go('/'),
-              icon: const Icon(Icons.home),
-              label: const Text("Go Home"),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 60),
+              const SizedBox(height: 16),
+              const Text(
+                "Something went wrong.",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(message, textAlign: TextAlign.center),
+            ],
+          ),
         ),
       ),
     );

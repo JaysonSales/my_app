@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:my_app/src/app.dart';
-import 'package:my_app/src/service/core/auth_service.dart';
-import 'package:my_app/src/service/core/config_service.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart';
+import 'package:my_app/src/provider/core/config_provider.dart';
+import 'package:my_app/src/provider/theme/theme_provider.dart';
 
 import 'package:provider/provider.dart';
 
@@ -21,6 +22,7 @@ Future<void> main() async {
       providers: [
         Provider<AuthService>(create: (_) => AuthService()),
         ChangeNotifierProvider<ConfigService>(create: (_) => ConfigService()),
+        ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),

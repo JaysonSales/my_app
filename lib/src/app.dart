@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:my_app/src/pages/public/error/internal_server_page.dart';
+import 'package:provider/provider.dart';
 import 'package:my_app/src/pages/private/index.dart';
 import 'package:my_app/src/pages/public/error/index.dart';
 import 'package:my_app/src/pages/public/error/maintenance_page.dart';
 import 'package:my_app/src/pages/public/error/not_found_page.dart';
 import 'package:my_app/src/pages/public/index.dart';
-import 'package:my_app/src/service/core/auth_service.dart';
-import 'package:my_app/src/service/core/config_service.dart';
-import 'package:provider/provider.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart';
+import 'package:my_app/src/provider/core/config_provider.dart';
+import 'package:my_app/src/provider/theme/theme_provider.dart';
+import 'package:my_app/src/utils/themes/themes.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -15,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final configService = context.watch<ConfigService>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     if (configService.loading) {
       return const MaterialApp(
@@ -25,30 +29,14 @@ class MyApp extends StatelessWidget {
 
     if (configService.error != null) {
       return MaterialApp(
+        home: InternalServerPage(message: configService.error.toString()),
         debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          appBar: AppBar(title: const Text("Configuration Error")),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                  const SizedBox(height: 16),
-                  const Text("Failed to load app configuration.", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(configService.error.toString(), textAlign: TextAlign.center),
-                ],
-              ),
-            ),
-          ),
-        ),
       );
     }
 
     final maintenanceConfig = configService.config?['maintenance'];
-    final bool isMaintenanceEnabled = maintenanceConfig is Map ? maintenanceConfig['enabled'] == true : false;
+    final bool isMaintenanceEnabled =
+        maintenanceConfig is Map && maintenanceConfig['enabled'] == true;
 
     if (isMaintenanceEnabled) {
       return const MaterialApp(
@@ -57,31 +45,35 @@ class MyApp extends StatelessWidget {
       );
     }
 
-    final GoRouter router = GoRouter(
+    final router = GoRouter(
       routes: <RouteBase>[...publicRoutes, ...privateRoutes, ...errorRoutes],
       redirect: (context, state) {
         final auth = context.read<AuthService>();
         final location = state.uri.toString();
 
-        final loggingIn = location == '/signin' || location == '/signup';
+        final isAuthPath = location == '/signin' || location == '/signup';
+        final isRoot = location == '/';
 
-        if (!auth.isLoggedIn && location == '/home') {
-          return '/403';
-        }
+        if (!auth.isLoggedIn && isRoot) return '/signin';
+        if (auth.isLoggedIn && isAuthPath) return '/home';
 
-        if (auth.isLoggedIn && loggingIn) {
-          return '/home';
-        }
         return null;
       },
-      errorBuilder: (context, state) => const NotFoundPage(),
+
+      errorBuilder: (_, state) => const NotFoundPage(),
     );
+
+    final configTheme = configService.config?['app']?['theme'] ?? 'default';
+    final ThemeData selectedTheme =
+        appThemes[configTheme] ?? appThemes['default']!;
 
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       title: configService.config?['app']?['title'] ?? "My App",
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: selectedTheme,
+      darkTheme: appThemes['dark'],
+      themeMode: themeProvider.themeMode,
     );
   }
 }

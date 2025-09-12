@@ -1,29 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:my_app/src/pages/private/calculator/index.dart';
 import 'package:my_app/src/pages/private/layout.dart';
-import 'package:my_app/src/service/core/auth_service.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart';
 import 'package:my_app/src/pages/private/dashboard/index.dart';
-import 'package:provider/provider.dart';
+
+Widget _privatePageBuilder(
+  BuildContext context,
+  String title,
+  Widget Function(dynamic user) pageBuilder,
+) {
+  final auth = context.read<AuthService>();
+  final user = auth.currentUser;
+
+  if (user == null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.go('/403');
+    });
+    return const SizedBox.shrink();
+  }
+
+  return PrivateLayout(title: title, child: pageBuilder(user));
+}
 
 final privateRoutes = <RouteBase>[
   GoRoute(
     path: '/home',
-    builder: (BuildContext context, GoRouterState state) {
-      final auth = context.read<AuthService>();
-      return PrivateLayout(
-        title: 'Home',
-        child: HomePage(user: auth.currentUser!),
-      );
-    },
+    builder: (context, state) =>
+        _privatePageBuilder(context, 'Home', (user) => HomePage(user: user)),
   ),
   GoRoute(
     path: '/calculator',
-    builder: (BuildContext context, GoRouterState state) {
-      return const PrivateLayout(
-        title: 'Calculator',
-        child: CalculatorPage(),
-      );
-    },
+    builder: (context, state) => _privatePageBuilder(
+      context,
+      'Calculator',
+      (user) => CalculatorPage(user: user),
+    ),
   ),
 ];
