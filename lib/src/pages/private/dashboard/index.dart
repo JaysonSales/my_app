@@ -8,6 +8,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('Welcome, ${user.name}!!')));
+    return Scaffold(body: Center(child: Text('Welcome, ${user.firstName}!!')));
   }
 }

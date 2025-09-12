@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:go_router/go_router.dart';
 import 'package:my_app/src/provider/core/auth_provider.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -27,24 +28,23 @@ class SignUpPageState extends State<SignUpPage> {
 
     try {
       await _authService.register(
-        formData['email'],
-        formData['password'],
-        formData['name'],
+        email: formData['email'],
+        password: formData['password'],
+        firstName: formData['firstName'],
+        lastName: formData['lastName'],
+        middleName: formData['middleName'],
+        birthDate: formData['birthDate'],
+        location: formData['location'],
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Signed up!\nEmail: ${formData['email']}\nName: ${formData['name']}',
-          ),
-          duration: const Duration(seconds: 3),
-        ),
+        const SnackBar(content: Text("Sign up successful! Please sign in.")),
       );
-
-      await Future.delayed(const Duration(seconds: 2));
-      if (!mounted) return;
-      Navigator.of(context).pop();
+      context.go(
+        '/signin',
+        extra: {'email': formData['email'], 'password': formData['password']},
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,7 +60,7 @@ class SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.all(16.0),
         child: FormBuilder(
           key: _formKey,
-          child: Column(
+          child: ListView(
             children: [
               FormBuilderTextField(
                 name: 'email',
@@ -88,9 +88,65 @@ class SignUpPageState extends State<SignUpPage> {
               ),
               const SizedBox(height: 16),
               FormBuilderTextField(
-                name: 'name',
+                name: 'confirm_password',
                 decoration: const InputDecoration(
-                  labelText: 'Name',
+                  labelText: 'Confirm Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (val) {
+                  final password =
+                      _formKey.currentState?.fields['password']?.value;
+                  if (val == null || val.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (val != password) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              FormBuilderTextField(
+                name: 'firstName',
+                decoration: const InputDecoration(
+                  labelText: 'First Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: FormBuilderValidators.required(),
+              ),
+              const SizedBox(height: 16),
+              FormBuilderTextField(
+                name: 'middleName',
+                decoration: const InputDecoration(
+                  labelText: 'Middle Name (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FormBuilderTextField(
+                name: 'lastName',
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: FormBuilderValidators.required(),
+              ),
+              const SizedBox(height: 16),
+              FormBuilderDateTimePicker(
+                name: 'birthDate',
+                inputType: InputType.date,
+                decoration: const InputDecoration(
+                  labelText: 'Birthdate',
+                  border: OutlineInputBorder(),
+                ),
+                validator: FormBuilderValidators.required(),
+              ),
+              const SizedBox(height: 16),
+              FormBuilderTextField(
+                name: 'location',
+                decoration: const InputDecoration(
+                  labelText: 'Location',
                   border: OutlineInputBorder(),
                 ),
                 validator: FormBuilderValidators.required(),

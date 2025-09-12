@@ -11,9 +11,27 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _emailController = TextEditingController(text: "jayson");
-  final _passwordController = TextEditingController(text: "kahitano");
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
   bool _isLoading = false;
+  bool _initialized = false;
+  bool _isPasswordVisible = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_initialized) {
+      final extras = GoRouterState.of(context).extra as Map<String, dynamic>?;
+      _emailController = TextEditingController(
+        text: extras?['email']?.toString() ?? 'jayson',
+      );
+      _passwordController = TextEditingController(
+        text: extras?['password']?.toString() ?? 'kahitano',
+      );
+      _initialized = true;
+    }
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -68,9 +86,24 @@ class _SignInPageState extends State<SignInPage> {
               const SizedBox(height: 16.0),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: !_isPasswordVisible,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
               ),
+
               const SizedBox(height: 24.0),
               if (_isLoading)
                 const CircularProgressIndicator()
