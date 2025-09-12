@@ -58,7 +58,7 @@ class AuthService {
       password: 'kahitano',
       firstName: "Jayson",
       lastName: "Sales",
-      middleName: "M",
+      middleName: "V",
       birthDate: DateTime(2000, 12, 5),
       location: "Philippines",
     ),

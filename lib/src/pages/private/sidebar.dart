@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:my_app/src/widgets/messaging/confirm_dialog.dart';
 import 'package:my_app/src/widgets/core/app_name.dart';
 import 'package:my_app/src/provider/core/auth_provider.dart';
 
@@ -37,7 +38,7 @@ class SideBar extends StatelessWidget {
             ? theme.colorScheme.primary.withValues(alpha: 0.1)
             : null,
         enabled: !isSelected,
-        onTap: isSelected
+        onTap: !isSelected
             ? null
             : () {
                 context.go(route);
@@ -68,11 +69,18 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Sign Out'),
-            onTap: () async {
-              final authService = context.read<AuthService>();
-              await authService.logout();
-              if (!context.mounted) return;
-              context.go('/');
+            onTap: () {
+              ConfirmDialog.showConfirmDialog(
+                context: context,
+                message: 'Are you sure you want to sign out?',
+                successMessage: 'Signed out successfully',
+                onAccept: () async {
+                  final authService = context.read<AuthService>();
+                  await authService.logout();
+                  if (!context.mounted) return;
+                  context.go('/');
+                },
+              );
             },
           ),
         ],

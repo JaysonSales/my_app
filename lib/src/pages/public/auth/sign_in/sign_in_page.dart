@@ -51,6 +51,15 @@ class _SignInPageState extends State<SignInPage> {
 
       if (user != null) {
         context.go('/home', extra: user);
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome, ${user.fullName}!'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
