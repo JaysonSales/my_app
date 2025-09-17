@@ -1,17 +1,23 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:logging/logging.dart';
 
-class User {
+final Logger _logger = Logger('AuthProvider');
+
+class UserProfile {
+  final String uid;
   final String email;
-  final String password;
   final String firstName;
   final String? middleName;
   final String lastName;
   final DateTime birthDate;
   final String location;
 
-  const User({
+  UserProfile({
+    required this.uid,
     required this.email,
-    required this.password,
     required this.firstName,
     this.middleName,
     required this.lastName,
@@ -21,65 +27,160 @@ class User {
 
   String get fullName {
     if (middleName != null && middleName!.isNotEmpty) {
-      return "$firstName ${middleName![0]}. $lastName";
+      return '$firstName $middleName $lastName';
     }
-    return "$firstName $lastName";
+    return '$firstName $lastName';
+  }
+
+  static UserProfile fromMap(String uid, Map<String, dynamic> data) {
+    return UserProfile(
+      uid: uid,
+      email: data['email'] as String? ?? 'no-email@placeholder.com',
+      firstName: data['firstName'] as String? ?? '',
+      middleName: data['middleName'] as String?,
+      lastName: data['lastName'] as String? ?? '',
+      birthDate: (data['birthDate'] is Timestamp)
+          ? (data['birthDate'] as Timestamp).toDate()
+          : DateTime.now(),
+      location: data['location'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'email': email,
+      'firstName': firstName,
+      'middleName': middleName,
+      'lastName': lastName,
+      'birthDate': Timestamp.fromDate(birthDate),
+      'location': location,
+    };
   }
 }
 
-class AuthService {
-  static final List<User> _users = [
-    User(
-      email: 'test@example.com',
-      password: 'password',
-      firstName: "Test",
-      lastName: "User",
-      birthDate: DateTime(1995, 5, 20),
-      location: "New York, USA",
-    ),
-    User(
-      email: 'user1@example.com',
-      password: 'pass1',
-      firstName: "User",
-      lastName: "One",
-      birthDate: DateTime(1990, 1, 1),
-      location: "California, USA",
-    ),
-    User(
-      email: 'user2@example.com',
-      password: 'pass2',
-      firstName: "User",
-      lastName: "Two",
-      birthDate: DateTime(1992, 6, 15),
-      location: "Texas, USA",
-    ),
-    User(
-      email: 'jayson',
-      password: 'kahitano',
-      firstName: "Jayson",
-      lastName: "Sales",
-      middleName: "V",
-      birthDate: DateTime(2000, 12, 5),
-      location: "Philippines",
-    ),
-  ];
+class AuthProvider with ChangeNotifier {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  User? _currentUser;
-  User? get currentUser => _currentUser;
+  UserProfile? _currentUserProfile;
+  bool _loading = true;
+  String? _error;
+  late final StreamSubscription<User?> _authSubscription;
 
-  Future<User?> login(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
+  UserProfile? get currentUserProfile => _currentUserProfile;
+  bool get loading => _loading;
+  String? get error => _error;
+  bool get isLoggedIn =>
+      _auth.currentUser != null && _currentUserProfile != null;
 
-    for (final user in _users) {
-      if (user.email == email && user.password == password) {
-        _currentUser = user;
-        return user;
+  AuthProvider() {
+    _authSubscription = _auth.authStateChanges().listen((user) async {
+      _loading = true;
+      _error = null;
+      notifyListeners();
+
+      if (user != null) {
+        _logger.info('User signed in: ${user.uid}');
+        await _loadOrCreateUserProfile(user);
+      } else {
+        _logger.info('User signed out.');
+        _currentUserProfile = null;
+        _loading = false;
+        notifyListeners();
       }
-    }
-    return null;
+    });
   }
 
-  Future<void> register({
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadOrCreateUserProfile(User user) async {
+    try {
+      final docSnapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (docSnapshot.exists && docSnapshot.data() != null) {
+        try {
+          _currentUserProfile = UserProfile.fromMap(
+            user.uid,
+            docSnapshot.data()!,
+          );
+          _logger.info('Loaded user profile for ${user.uid}');
+        } catch (e, stack) {
+          _logger.severe(
+            'Failed to map user profile for ${user.uid}',
+            e,
+            stack,
+          );
+          _error = 'Failed to load user profile. Malformed data.';
+          _currentUserProfile = null;
+          await _firestore.collection('users').doc(user.uid).delete();
+          _logger.warning(
+            'Deleted corrupted user profile document for ${user.uid}.',
+          );
+        }
+      } else {
+        final newProfile = UserProfile(
+          uid: user.uid,
+          email: user.email!,
+          firstName: '',
+          lastName: '',
+          birthDate: DateTime.now(),
+          location: '',
+        );
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .set(newProfile.toMap());
+        _currentUserProfile = newProfile;
+        _logger.warning(
+          'User profile not found for ${user.uid}, created a new one.',
+        );
+      }
+    } catch (e, stack) {
+      _logger.severe(
+        'Failed to load or create user profile for ${user.uid}',
+        e,
+        stack,
+      );
+      _error = 'Failed to load user profile. Please try again.';
+      _currentUserProfile = null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<UserProfile?> login(String email, String password) async {
+    try {
+      _loading = true;
+      _error = null;
+      notifyListeners();
+
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      _logger.info('User signed in: ${userCredential.user!.uid}');
+      final user = userCredential.user;
+      _logger.info('Login successful for ${user!.uid}');
+
+      await _loadOrCreateUserProfile(user);
+      return currentUserProfile;
+    } on FirebaseAuthException catch (e) {
+      _logger.warning('Login failed: ${e.message}');
+      _error = e.message;
+      _loading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<UserProfile?> register({
     required String email,
     required String password,
     required String firstName,
@@ -88,34 +189,50 @@ class AuthService {
     required DateTime birthDate,
     required String location,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      _loading = true;
+      _error = null;
+      notifyListeners();
 
-    for (final user in _users) {
-      if (user.email == email) {
-        throw Exception('Email already exists');
-      }
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email.toLowerCase().trim(),
+        password: password,
+      );
+      final uid = userCredential.user!.uid;
+
+      final userProfile = UserProfile(
+        uid: uid,
+        email: email.toLowerCase().trim(),
+        firstName: firstName.toLowerCase().trim(),
+        middleName: middleName?.toLowerCase().trim(),
+        lastName: lastName.toLowerCase().trim(),
+        birthDate: birthDate,
+        location: location.toLowerCase().trim(),
+      );
+
+      await _firestore.collection('users').doc(uid).set(userProfile.toMap());
+      _currentUserProfile = userProfile;
+      _logger.info('User registered: $uid');
+      _loading = false;
+      notifyListeners();
+      return userProfile;
+    } on FirebaseAuthException catch (e) {
+      _logger.warning('Registration failed: ${e.message}');
+      _error = e.message;
+      _loading = false;
+      notifyListeners();
+      return null;
     }
-
-    final newUser = User(
-      email: email,
-      password: password,
-      firstName: firstName,
-      middleName: middleName,
-      lastName: lastName,
-      birthDate: birthDate,
-      location: location,
-    );
-
-    _users.add(newUser);
-    _currentUser = newUser;
   }
 
   Future<void> logout() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    _currentUser = null;
+    try {
+      await _auth.signOut();
+      _logger.info('User logged out');
+    } on FirebaseAuthException catch (e) {
+      _logger.warning('Logout failed: ${e.message}');
+      _error = e.message;
+      notifyListeners();
+    }
   }
-
-  bool get isLoggedIn => _currentUser != null;
-
-  List<User> get allUsers => List.unmodifiable(_users);
 }

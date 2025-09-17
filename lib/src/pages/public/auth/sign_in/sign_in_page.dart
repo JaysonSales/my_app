@@ -24,7 +24,7 @@ class _SignInPageState extends State<SignInPage> {
     if (!_initialized) {
       final extras = GoRouterState.of(context).extra as Map<String, dynamic>?;
       _emailController = TextEditingController(
-        text: extras?['email']?.toString() ?? 'jayson',
+        text: extras?['email']?.toString() ?? 'jayson.sales.r@gmail.com',
       );
       _passwordController = TextEditingController(
         text: extras?['password']?.toString() ?? 'kahitano',
@@ -34,40 +34,70 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your password'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = await authService.login(
-      _emailController.text,
-      _passwordController.text,
-    );
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = await authProvider.login(email, password);
 
-    if (mounted) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (user != null) {
+          context.go('/home', extra: user);
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Welcome, ${user.fullName}!'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid email or password'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } on Exception catch (e) {
       setState(() {
         _isLoading = false;
       });
-
-      if (user != null) {
-        context.go('/home', extra: user);
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Welcome, ${user.fullName}!'),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid email or password'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
     }
   }
 

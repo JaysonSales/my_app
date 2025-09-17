@@ -5,14 +5,21 @@ final uuid = Uuid();
 // final log = Logger('UsersService');
 
 final List<Map<String, dynamic>> mockData = [
-  {"id": "ab5bac46-ca24-44b0-b850-5a00f5aac83b", "username": "alisonburgers", "email": "projayson@gmail.com"},
-  {"id": "e6f7c360-5e01-43b3-8305-93ee43f18740", "username": "jaysonsales", "email": "jayson.sales.r@gmail.com"},
+  {
+    "id": "ab5bac46-ca24-44b0-b850-5a00f5aac83b",
+    "username": "alisonburgers",
+    "email": "projayson@gmail.com",
+  },
+  {
+    "id": "e6f7c360-5e01-43b3-8305-93ee43f18740",
+    "username": "jaysonsales",
+    "email": "jayson.sales.r@gmail.com",
+  },
 ];
 
 class UsersService {
   Future<List<Map<String, dynamic>>> getUsers() async {
     await Future.delayed(const Duration(seconds: 1));
-    // log.info("Fetched ${mockData.length} users");
     return mockData;
   }
 }
@@ -28,6 +35,5 @@ class AddUserService {
       "password": user['password']!,
     };
     mockData.add(newUser);
-    // log.info('User added: $newUser');
   }
 }

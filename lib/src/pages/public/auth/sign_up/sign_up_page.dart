@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:my_app/src/provider/core/auth_provider.dart' as auth;
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -13,23 +15,53 @@ class SignUpPage extends StatefulWidget {
 
 class SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final _authService = AuthService();
+  bool _isLoading = false;
 
   Future<void> _handleSignUp() async {
     if (!(_formKey.currentState?.saveAndValidate() ?? false)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please check errors before signing up")),
+        const SnackBar(
+          content: Text("Please check errors before signing up"),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     final formData = _formKey.currentState!.value;
+    final authProvider = context.read<auth.AuthProvider>();
+
+    final email = formData['email']?.toString().trim();
+    final password = formData['password']?.toString();
+
+    // Extra validation
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(email ?? '')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Invalid email address"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if ((password ?? '').length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Password must be at least 6 characters"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
 
     try {
-      await _authService.register(
-        email: formData['email'],
-        password: formData['password'],
+      await authProvider.register(
+        email: email!,
+        password: password!,
         firstName: formData['firstName'],
         lastName: formData['lastName'],
         middleName: formData['middleName'],
@@ -39,29 +71,39 @@ class SignUpPageState extends State<SignUpPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sign up successful! Please sign in.")),
+        const SnackBar(
+          content: Text("Sign up successful!"),
+          backgroundColor: Colors.green,
+        ),
       );
-      context.go(
-        '/signin',
-        extra: {'email': formData['email'], 'password': formData['password']},
-      );
+
+      context.go('/');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: code=${e.code}, message=${e.message}');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Sign up failed: ${e.toString()}")),
+        SnackBar(
+          content: Text("Sign up failed: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
       );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Sign Up')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FormBuilder(
           key: _formKey,
           child: ListView(
             children: [
+              const SizedBox(height: 10),
               FormBuilderTextField(
                 name: 'email',
                 decoration: const InputDecoration(
@@ -72,6 +114,7 @@ class SignUpPageState extends State<SignUpPage> {
                   FormBuilderValidators.required(),
                   FormBuilderValidators.email(),
                 ]),
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               FormBuilderTextField(
@@ -152,10 +195,12 @@ class SignUpPageState extends State<SignUpPage> {
                 validator: FormBuilderValidators.required(),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _handleSignUp,
-                child: const Text('Sign Up'),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: _handleSignUp,
+                      child: const Text('Sign Up'),
+                    ),
             ],
           ),
         ),

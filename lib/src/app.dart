@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
     final router = GoRouter(
       routes: <RouteBase>[...publicRoutes, ...privateRoutes, ...errorRoutes],
       redirect: (context, state) {
-        final auth = context.read<AuthService>();
+        final auth = context.read<AuthProvider>();
         final location = state.uri.toString();
 
         final isAuthPath = location == '/signin' || location == '/signup';

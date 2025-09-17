@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_app/src/provider/core/auth_provider.dart';
 
 class CalculatorPage extends StatefulWidget {
-  final User user;
+  final UserProfile user;
   const CalculatorPage({super.key, required this.user});
 
   @override

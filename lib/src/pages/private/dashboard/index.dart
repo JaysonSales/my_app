@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_app/src/provider/core/auth_provider.dart';
 
 class HomePage extends StatelessWidget {
-  final User user;
+  final UserProfile user;
 
   const HomePage({super.key, required this.user});
 

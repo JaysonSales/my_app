@@ -34,15 +34,13 @@ class SideBar extends StatelessWidget {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        tileColor: isSelected
-            ? theme.colorScheme.primary.withValues(alpha: 0.1)
-            : null,
+        tileColor:
+            // ignore: deprecated_member_use
+            isSelected ? theme.colorScheme.primary.withOpacity(0.1) : null,
         enabled: !isSelected,
-        onTap: !isSelected
-            ? null
-            : () {
-                context.go(route);
-              },
+        onTap: () {
+          context.go(route);
+        },
       );
     }
 
@@ -75,8 +73,8 @@ class SideBar extends StatelessWidget {
                 message: 'Are you sure you want to sign out?',
                 successMessage: 'Signed out successfully',
                 onAccept: () async {
-                  final authService = context.read<AuthService>();
-                  await authService.logout();
+                  final authProvider = context.read<AuthProvider>();
+                  await authProvider.logout();
                   if (!context.mounted) return;
                   context.go('/');
                 },
