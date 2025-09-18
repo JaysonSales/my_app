@@ -74,21 +74,24 @@ class AuthProvider with ChangeNotifier {
       _auth.currentUser != null && _currentUserProfile != null;
 
   AuthProvider() {
-    _authSubscription = _auth.authStateChanges().listen((user) async {
-      _loading = true;
-      _error = null;
-      notifyListeners();
+    _authSubscription = _auth
+        .authStateChanges()
+        .distinct((prev, next) => prev?.uid == next?.uid)
+        .listen((user) async {
+          _loading = true;
+          _error = null;
+          notifyListeners();
 
-      if (user != null) {
-        _logger.info('User signed in: ${user.uid}');
-        await _loadOrCreateUserProfile(user);
-      } else {
-        _logger.info('User signed out.');
-        _currentUserProfile = null;
-        _loading = false;
-        notifyListeners();
-      }
-    });
+          if (user != null) {
+            _logger.info('User signed in: ${user.uid}');
+            await _loadOrCreateUserProfile(user);
+          } else {
+            _logger.info('User signed out.');
+            _currentUserProfile = null;
+            _loading = false;
+            notifyListeners();
+          }
+        });
   }
 
   @override
@@ -228,7 +231,6 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     try {
       await _auth.signOut();
-      _logger.info('User logged out');
     } on FirebaseAuthException catch (e) {
       _logger.warning('Logout failed: ${e.message}');
       _error = e.message;
