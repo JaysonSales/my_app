@@ -10,11 +10,11 @@ import 'package:my_app/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final configService = ConfigService();
-  await configService.loadConfig();
+  final configProvider = ConfigProvider();
+  await configProvider.loadConfig();
 
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform(configService),
+    options: DefaultFirebaseOptions.currentPlatform(configProvider),
   );
 
   Logger.root.level = Level.ALL;
@@ -28,7 +28,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
-        ChangeNotifierProvider<ConfigService>(create: (_) => configService),
+        ChangeNotifierProvider<ConfigProvider>(create: (_) => configProvider),
         ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),

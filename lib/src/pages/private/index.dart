@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
+import 'package:my_app/src/widgets/core/redirect.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/src/pages/private/calculator/index.dart';
 import 'package:my_app/src/pages/private/layout.dart';
@@ -17,15 +18,14 @@ Widget _privatePageBuilder(
 ) {
   final auth = context.read<AuthProvider>();
   final user = auth.currentUserProfile;
-  final firstName = user?.firstName ?? 'User';
-  _logger.info('Building private page: $title for user: $firstName');
 
   if (user == null) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.go('/403');
-    });
-    return const SizedBox.shrink();
+    _logger.warning('Unauthorized access to $title. Redirecting to /403...');
+    return const RedirectPage(path: '/403');
   }
+
+  final firstName = user.firstName;
+  _logger.info('Building private page: $title for user: $firstName');
 
   return PrivateLayout(title: title, child: pageBuilder(user));
 }
@@ -38,18 +38,12 @@ final privateRoutes = <RouteBase>[
   ),
   GoRoute(
     path: '/calculator',
-    builder: (context, state) => _privatePageBuilder(
-      context,
-      'Calculator',
-      (user) => CalculatorPage(user: user),
-    ),
+    builder: (context, state) =>
+        _privatePageBuilder(context, 'Calculator', (user) => CalculatorPage(user: user)),
   ),
   GoRoute(
     path: '/settings',
-    builder: (context, state) => _privatePageBuilder(
-      context,
-      'Settings',
-      (user) => SettingsPage(user: user),
-    ),
+    builder: (context, state) =>
+        _privatePageBuilder(context, 'Settings', (user) => SettingsPage(user: user)),
   ),
 ];

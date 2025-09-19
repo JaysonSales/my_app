@@ -63,7 +63,7 @@ class AuthProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   UserProfile? _currentUserProfile;
-  bool _loading = true;
+  bool _loading = true; 
   String? _error;
   late final StreamSubscription<User?> _authSubscription;
 
@@ -101,33 +101,13 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _loadOrCreateUserProfile(User user) async {
+    final ref = _firestore.collection('users').doc(user.uid);
+
     try {
-      final docSnapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (docSnapshot.exists && docSnapshot.data() != null) {
-        try {
-          _currentUserProfile = UserProfile.fromMap(
-            user.uid,
-            docSnapshot.data()!,
-          );
-          _logger.info('Loaded user profile for ${user.uid}');
-        } catch (e, stack) {
-          _logger.severe(
-            'Failed to map user profile for ${user.uid}',
-            e,
-            stack,
-          );
-          _error = 'Failed to load user profile. Malformed data.';
-          _currentUserProfile = null;
-          await _firestore.collection('users').doc(user.uid).delete();
-          _logger.warning(
-            'Deleted corrupted user profile document for ${user.uid}.',
-          );
-        }
-      } else {
-        final newProfile = UserProfile(
+      final doc = await ref.get();
+
+      if (!doc.exists || doc.data() == null) {
+        _currentUserProfile = UserProfile(
           uid: user.uid,
           email: user.email!,
           firstName: '',
@@ -135,22 +115,23 @@ class AuthProvider with ChangeNotifier {
           birthDate: DateTime.now(),
           location: '',
         );
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .set(newProfile.toMap());
-        _currentUserProfile = newProfile;
-        _logger.warning(
-          'User profile not found for ${user.uid}, created a new one.',
-        );
+        await ref.set(_currentUserProfile!.toMap());
+        _logger.warning('Created new profile for ${user.uid}');
+      } else {
+        try {
+          _currentUserProfile = UserProfile.fromMap(user.uid, doc.data()!);
+          _logger.info('Loaded profile for ${user.uid}');
+        } catch (e, stack) {
+          _logger.severe('Invalid profile data for ${user.uid}', e, stack);
+          _error = 'Profile data corrupted.';
+          _currentUserProfile = null;
+          await ref.delete();
+          _logger.warning('Deleted corrupted profile for ${user.uid}');
+        }
       }
     } catch (e, stack) {
-      _logger.severe(
-        'Failed to load or create user profile for ${user.uid}',
-        e,
-        stack,
-      );
-      _error = 'Failed to load user profile. Please try again.';
+      _logger.severe('Failed to load/create profile for ${user.uid}', e, stack);
+      _error = 'Could not load profile. Please try again.';
       _currentUserProfile = null;
     } finally {
       _loading = false;

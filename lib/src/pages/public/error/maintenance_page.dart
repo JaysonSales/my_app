@@ -7,7 +7,7 @@ class MaintenancePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final configService = Provider.of<ConfigService>(context);
+    final configProvider = Provider.of<ConfigProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -15,21 +15,21 @@ class MaintenancePage extends StatelessWidget {
         centerTitle: true,
       ),
       body: Center(
-        child: configService.loading
+        child: configProvider.loading
             ? const CircularProgressIndicator()
-            : configService.error != null
+            : configProvider.error != null
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.error_outline, color: Colors.red, size: 100),
                       const SizedBox(height: 20),
                       const Text("Error loading configuration"),
-                      Text(configService.error.toString(), textAlign: TextAlign.center),
+                      Text(configProvider.error.toString(), textAlign: TextAlign.center),
                     ],
                   )
                 : Builder(
                     builder: (context) {
-                      final maintenanceConfig = configService.config?['maintenance'];
+                      final maintenanceConfig = configProvider.config?['maintenance'];
                       String message = "We'll be back soon!";
                       String? imageUrl;
 

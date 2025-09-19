@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 
-final Logger _logger = Logger('ConfigService');
+final Logger _logger = Logger('ConfigProvider');
 
-class ConfigService with ChangeNotifier {
+class ConfigProvider with ChangeNotifier {
   bool _loading = true;
   Map<String, dynamic>? _config;
   String? _error;
@@ -14,7 +14,7 @@ class ConfigService with ChangeNotifier {
   Map<String, dynamic>? get config => _config;
   String? get error => _error;
 
-  ConfigService() {
+  ConfigProvider() {
     loadConfig();
   }
 

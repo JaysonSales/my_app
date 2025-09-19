@@ -17,75 +17,45 @@ import 'package:my_app/src/provider/core/config_provider.dart';
 /// );
 /// ```
 class DefaultFirebaseOptions {
-  static FirebaseOptions currentPlatform(ConfigService configService) {
-    final options = configService.config?['firebaseOptions'];
+  static FirebaseOptions currentPlatform(ConfigProvider configProvider) {
+    final options = configProvider.config?['firebaseOptions'];
     if (options == null) {
-      throw StateError('firebaseOptions not loaded in ConfigService');
+      throw StateError('firebaseOptions not loaded in ConfigProvider');
     }
 
-    if (kIsWeb) {
-      final web = options['web'] as Map<String, dynamic>;
-      return FirebaseOptions(
-        apiKey: web['apiKey'] as String,
-        appId: web['appId'] as String,
-        messagingSenderId: web['messagingSenderId'] as String,
-        projectId: web['projectId'] as String,
-        authDomain: web['authDomain'] as String,
-        storageBucket: web['storageBucket'] as String,
-        measurementId: web['measurementId'] as String,
-      );
-    }
+    if (kIsWeb) return _fromMap(options['web']);
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        final android = options['android'] as Map<String, dynamic>;
-        return FirebaseOptions(
-          apiKey: android['apiKey'] as String,
-          appId: android['appId'] as String,
-          messagingSenderId: android['messagingSenderId'] as String,
-          projectId: android['projectId'] as String,
-          storageBucket: android['storageBucket'] as String,
-        );
-
+        return _fromMap(options['android']);
       case TargetPlatform.iOS:
-        final ios = options['ios'] as Map<String, dynamic>;
-        return FirebaseOptions(
-          apiKey: ios['apiKey'] as String,
-          appId: ios['appId'] as String,
-          messagingSenderId: ios['messagingSenderId'] as String,
-          projectId: ios['projectId'] as String,
-          storageBucket: ios['storageBucket'] as String,
-          iosBundleId: ios['iosBundleId'] as String,
-        );
-
+        return _fromMap(options['ios'], ios: true);
       case TargetPlatform.macOS:
-        final macos = options['macos'] as Map<String, dynamic>;
-        return FirebaseOptions(
-          apiKey: macos['apiKey'] as String,
-          appId: macos['appId'] as String,
-          messagingSenderId: macos['messagingSenderId'] as String,
-          projectId: macos['projectId'] as String,
-          storageBucket: macos['storageBucket'] as String,
-          iosBundleId: macos['iosBundleId'] as String,
-        );
-
+        return _fromMap(options['macos'], ios: true);
       case TargetPlatform.windows:
-        final windows = options['windows'] as Map<String, dynamic>;
-        return FirebaseOptions(
-          apiKey: windows['apiKey'] as String,
-          appId: windows['appId'] as String,
-          messagingSenderId: windows['messagingSenderId'] as String,
-          projectId: windows['projectId'] as String,
-          authDomain: windows['authDomain'] as String,
-          storageBucket: windows['storageBucket'] as String,
-          measurementId: windows['measurementId'] as String,
-        );
-
+        return _fromMap(options['windows'], webLike: true);
       case TargetPlatform.linux:
         throw UnsupportedError('Linux is not configured.');
 
       default:
         throw UnsupportedError('Unsupported platform.');
     }
+  }
+
+  static FirebaseOptions _fromMap(
+    Map<String, dynamic> data, {
+    bool ios = false,
+    bool webLike = false,
+  }) {
+    return FirebaseOptions(
+      apiKey: data['apiKey'] as String,
+      appId: data['appId'] as String,
+      messagingSenderId: data['messagingSenderId'] as String,
+      projectId: data['projectId'] as String,
+      storageBucket: data['storageBucket'] as String?,
+      authDomain: webLike ? data['authDomain'] as String? : null,
+      measurementId: webLike ? data['measurementId'] as String? : null,
+      iosBundleId: ios ? data['iosBundleId'] as String? : null,
+    );
   }
 }

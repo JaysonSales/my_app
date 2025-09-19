@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logging/logging.dart';
 import 'package:my_app/src/pages/public/error/internal_server_page.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/src/pages/private/index.dart';
@@ -12,29 +13,33 @@ import 'package:my_app/src/provider/core/config_provider.dart';
 import 'package:my_app/src/provider/theme/theme_provider.dart';
 import 'package:my_app/src/utils/themes/themes.dart';
 
+final Logger _logger = Logger('App');
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final configService = context.watch<ConfigService>();
+    final configProvider = context.watch<ConfigProvider>();
     final themeProvider = context.watch<ThemeProvider>();
+    final authProvider = context.watch<AuthProvider>();
 
-    if (configService.loading) {
+    _logger.info(authProvider.loading);
+    if (configProvider.loading) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
-    if (configService.error != null) {
+    if (configProvider.error != null) {
       return MaterialApp(
-        home: InternalServerPage(message: configService.error.toString()),
+        home: InternalServerPage(message: configProvider.error.toString()),
         debugShowCheckedModeBanner: false,
       );
     }
 
-    final maintenanceConfig = configService.config?['maintenance'];
+    final maintenanceConfig = configProvider.config?['maintenance'];
     final bool isMaintenanceEnabled =
         maintenanceConfig is Map && maintenanceConfig['enabled'] == true;
 
@@ -55,7 +60,7 @@ class MyApp extends StatelessWidget {
         final isRoot = location == '/';
 
         if (!auth.isLoggedIn && isRoot) return '/signin';
-        if (auth.isLoggedIn && isAuthPath) return '/home';
+        if (auth.isLoggedIn && (isAuthPath || isRoot)) return '/home';
 
         return null;
       },
@@ -63,14 +68,14 @@ class MyApp extends StatelessWidget {
       errorBuilder: (_, state) => const NotFoundPage(),
     );
 
-    final configTheme = configService.config?['app']?['theme'] ?? 'default';
+    final configTheme = configProvider.config?['app']?['theme'] ?? 'default';
     final ThemeData selectedTheme =
         appThemes[configTheme] ?? appThemes['default']!;
 
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,
-      title: configService.config?['app']?['title'] ?? "My App",
+      title: configProvider.config?['app']?['title'] ?? "My App",
       theme: selectedTheme,
       darkTheme: appThemes['dark'],
       themeMode: themeProvider.themeMode,

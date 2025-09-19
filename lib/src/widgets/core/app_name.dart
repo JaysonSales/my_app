@@ -7,8 +7,8 @@ class AppName extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final configService = Provider.of<ConfigService>(context);
-    final appName = configService.config?['app']['name'] ?? 'My App';
+    final configProvider = Provider.of<ConfigProvider>(context);
+    final appName = configProvider.config?['app']['name'] ?? 'My App';
     final theme = Theme.of(context);
 
     return Text(appName, style: theme.textTheme.titleLarge);
