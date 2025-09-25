@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
+import 'package:my_app/src/provider/core/user_provider.dart';
 import 'package:my_app/src/widgets/core/redirect.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/src/pages/private/calculator/index.dart';
 import 'package:my_app/src/pages/private/layout.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart';
 import 'package:my_app/src/pages/private/dashboard/index.dart';
 import 'package:my_app/src/pages/private/settings/index.dart';
 
@@ -16,8 +16,8 @@ Widget _privatePageBuilder(
   String title,
   Widget Function(dynamic user) pageBuilder,
 ) {
-  final auth = context.read<AuthProvider>();
-  final user = auth.currentUserProfile;
+  final userProvider = context.read<UserProvider>();
+  final user = userProvider.userProfile;
 
   if (user == null) {
     _logger.warning('Unauthorized access to $title. Redirecting to /403...');

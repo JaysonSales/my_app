@@ -1,26 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/src/provider/messaging/alert_provider.dart';
 
 class ConfirmDialog {
   static Future<void> showConfirmDialog({
     required BuildContext context,
     required String message,
     String acceptMessage = 'Confirm',
-    required VoidCallback onAccept,
+    required Future<void> Function() onAccept,
     String? successMessage,
+    String? errorMessage = "An error occurred",
   }) {
-    Future<void> handleAccept(BuildContext dialogContext) async {
-      Navigator.of(dialogContext).pop();
-      if (successMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(successMessage),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      onAccept();
-    }
-
     return showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -37,7 +26,15 @@ class ConfirmDialog {
             TextButton(
               child: Text(acceptMessage),
               onPressed: () async {
-                await handleAccept(dialogContext);
+                Navigator.of(dialogContext).pop();
+                try {
+                  await onAccept();
+                  if (successMessage != null) {
+                    AlertProvider.success(successMessage);
+                  }
+                } catch (e) {
+                  AlertProvider.error('$errorMessage\n$e');
+                }
               },
             ),
           ],

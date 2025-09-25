@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
+import 'package:my_app/src/provider/core/user_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart' as auth;
+import 'package:my_app/src/provider/messaging/alert_provider.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -30,36 +31,26 @@ class SignUpPageState extends State<SignUpPage> {
     }
 
     final formData = _formKey.currentState!.value;
-    final authProvider = context.read<auth.AuthProvider>();
+    final userProvider = Provider.of<UserProvider>(context);
 
     final email = formData['email']?.toString().trim();
     final password = formData['password']?.toString();
 
-    // Extra validation
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(email ?? '')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Invalid email address"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AlertProvider.error("Invalid email address");
+
       return;
     }
 
     if ((password ?? '').length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password must be at least 6 characters"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AlertProvider.error("Password must be at least 6 characters");
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await authProvider.register(
+      await userProvider.register(
         email: email!,
         password: password!,
         firstName: formData['firstName'],

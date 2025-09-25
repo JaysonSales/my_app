@@ -4,6 +4,9 @@ description: "A new Flutter project."
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
+homepage: https://github.com/JaysonSales/my_app#readme
+repository: https://github.com/JaysonSales/my_app.git
+issue_tracker: https://github.com/JaysonSales/my_app/issues
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
 # followed by an optional build number separated by a +.
@@ -45,6 +48,7 @@ dependencies:
   cloud_firestore: ^6.0.1
   firebase_messaging: ^16.0.1
   uuid: ^4.4.2
+  firebase_storage: ^13.0.2
 
 dev_dependencies:
   flutter_test:

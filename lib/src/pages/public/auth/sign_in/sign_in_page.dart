@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart';
+import 'package:my_app/src/provider/core/user_provider.dart';
+import 'package:my_app/src/provider/messaging/alert_provider.dart';
 import 'package:provider/provider.dart';
 
 class SignInPage extends StatefulWidget {
@@ -38,66 +39,40 @@ class _SignInPageState extends State<SignInPage> {
     final password = _passwordController.text;
 
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid email address'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AlertProvider.error('Please enter a valid email address');
       return;
     }
 
     if (password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your password'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AlertProvider.error('Please enter your password');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = await authProvider.login(email, password);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await userProvider.login(email: email, password: password);
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        if (user != null) {
-          context.go('/home', extra: user);
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Welcome, ${user.fullName}!'),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid email or password'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      int retries = 0;
+      while (!userProvider.isLoggedIn && retries < 10) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        retries++;
       }
-    } on Exception catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      setState(() => _isLoading = false);
+
+      if (userProvider.isLoggedIn) {
+        final user = userProvider.userProfile!;
+        AlertProvider.success('Welcome, ${user.fullName}!');
+      } else {
+        AlertProvider.error('Invalid email or password');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      AlertProvider.error(e.toString());
     }
   }
 
@@ -142,7 +117,6 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24.0),
               if (_isLoading)
                 const CircularProgressIndicator()

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:my_app/src/provider/core/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:my_app/src/widgets/messaging/confirm_dialog.dart';
 import 'package:my_app/src/widgets/core/app_name.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart';
 
 class SideBar extends StatelessWidget {
   const SideBar({super.key});
@@ -73,8 +73,11 @@ class SideBar extends StatelessWidget {
                 message: 'Are you sure you want to sign out?',
                 successMessage: 'Signed out successfully',
                 onAccept: () async {
-                  final authProvider = context.read<AuthProvider>();
-                  await authProvider.logout();
+                  final userProvider = Provider.of<UserProvider>(
+                    context,
+                    listen: false,
+                  );
+                  await userProvider.signOut();
                   if (!context.mounted) return;
                   context.go('/');
                 },

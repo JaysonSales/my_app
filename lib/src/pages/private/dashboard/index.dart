@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart';
+import 'package:my_app/src/provider/core/user_provider.dart';
 
 class HomePage extends StatelessWidget {
   final UserProfile user;

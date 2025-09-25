@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/src/provider/core/auth_provider.dart';
+import 'package:my_app/src/provider/core/user_provider.dart';
 
 class CalculatorPage extends StatefulWidget {
   final UserProfile user;
@@ -49,11 +49,14 @@ class _CalculatorPageState extends State<CalculatorPage> {
   }
 
   void _handleOperator(String operator) {
+    if (_operator.isNotEmpty && _currentInput.isNotEmpty) {
+      _calculate();
+    }
     if (_currentInput.isNotEmpty) {
       _num1 = double.parse(_currentInput);
-      _operator = operator;
-      _currentInput = '';
     }
+    _operator = operator;
+    _currentInput = '';
   }
 
   void _calculate() {
@@ -72,19 +75,27 @@ class _CalculatorPageState extends State<CalculatorPage> {
           result = _num1 * num2;
           break;
         case '/':
-          if (num2 != 0) {
-            result = _num1 / num2;
-          } else {
-            _output = 'Error';
+          if (num2 == 0) {
+            setState(() {
+              _output = 'Error';
+              _currentInput = '';
+              _num1 = 0;
+              _operator = '';
+            });
             return;
           }
+          result = _num1 / num2;
           break;
       }
 
       setState(() {
-        _output = result.toString();
-        _currentInput = '';
-        _num1 = 0;
+        if (result == result.truncate()) {
+          _output = result.truncate().toString();
+        } else {
+          _output = result.toString();
+        }
+        _currentInput = _output;
+        _num1 = result;
         _operator = '';
       });
     }
