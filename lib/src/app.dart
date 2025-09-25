@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:logging/logging.dart';
 import 'package:my_app/src/pages/public/error/internal_server_page.dart';
 import 'package:my_app/src/provider/core/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -39,8 +38,6 @@ class _MyAppState extends State<MyApp> {
         final String location = state.uri.toString();
         final bool isAuthPath = location == '/signin' || location == '/signup';
         final bool isRoot = location == '/';
-
-        Logger.root.info('Routing: isLoggedIn=$isLoggedIn, location=$location');
 
         if (!isLoggedIn && isRoot) {
           return '/signin';
