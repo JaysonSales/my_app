@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/src/provider/core/user_provider.dart';
+import 'package:math_expressions/math_expressions.dart';
 
 class CalculatorPage extends StatefulWidget {
   final UserProfile user;
@@ -10,175 +11,125 @@ class CalculatorPage extends StatefulWidget {
 }
 
 class _CalculatorPageState extends State<CalculatorPage> {
-  String _output = '0';
-  String _currentInput = '';
-  double _num1 = 0;
-  String _operator = '';
+  String userInput = '0', result = '';
 
-  void _buttonPressed(String buttonText) {
-    if (buttonText == 'C') {
-      _clear();
-    } else if (buttonText == '+' ||
-        buttonText == '-' ||
-        buttonText == '*' ||
-        buttonText == '/') {
-      _handleOperator(buttonText);
-    } else if (buttonText == '=') {
-      _calculate();
-    } else {
-      _handleNumber(buttonText);
-    }
-  }
+  static const ops = ['+', '-', '×', '÷'];
+  static const buttons = [
+    ['C', '%', '⌫', '÷'],
+    ['7', '8', '9', '×'],
+    ['4', '5', '6', '-'],
+    ['1', '2', '3', '+'],
+    ['0', '.', '='],
+  ];
 
-  void _clear() {
-    setState(() {
-      _output = '0';
-      _currentInput = '';
-      _num1 = 0;
-      _operator = '';
-    });
-  }
-
-  void _handleNumber(String number) {
-    setState(() {
-      if (_currentInput.length < 10) {
-        _currentInput += number;
-        _output = _currentInput;
-      }
-    });
-  }
-
-  void _handleOperator(String operator) {
-    if (_operator.isNotEmpty && _currentInput.isNotEmpty) {
-      _calculate();
-    }
-    if (_currentInput.isNotEmpty) {
-      _num1 = double.parse(_currentInput);
-    }
-    _operator = operator;
-    _currentInput = '';
-  }
-
-  void _calculate() {
-    if (_currentInput.isNotEmpty && _operator.isNotEmpty) {
-      double num2 = double.parse(_currentInput);
-      double result = 0;
-
-      switch (_operator) {
-        case '+':
-          result = _num1 + num2;
-          break;
-        case '-':
-          result = _num1 - num2;
-          break;
-        case '*':
-          result = _num1 * num2;
-          break;
-        case '/':
-          if (num2 == 0) {
-            setState(() {
-              _output = 'Error';
-              _currentInput = '';
-              _num1 = 0;
-              _operator = '';
-            });
-            return;
-          }
-          result = _num1 / num2;
-          break;
-      }
-
-      setState(() {
-        if (result == result.truncate()) {
-          _output = result.truncate().toString();
-        } else {
-          _output = result.toString();
+  void buttonPressed(String v) => setState(() {
+        switch (v) {
+          case 'C':
+            userInput = '0';
+            result = '';
+            break;
+          case '⌫':
+            if (userInput.isNotEmpty) {
+              userInput = userInput.substring(0, userInput.length - 1);
+              if (userInput.isEmpty) userInput = '0';
+            }
+            break;
+          case '.':
+            if (!userInput.split(RegExp(r'[+\-×÷]')).last.contains('.')) {
+              userInput += v;
+            }
+            break;
+          case '%':
+            final m = RegExp(r'(\d+(\.\d+)?)$').firstMatch(userInput);
+            if (m != null) {
+              final num = double.parse(m[1]!) / 100;
+              userInput = userInput.replaceRange(m.start, null, '$num');
+            }
+            break;
+          case '=':
+            userInput = result;
+            result = '0';
+            break;
+          default:
+            if (RegExp(r'^\d$').hasMatch(v)) {
+              final parts = userInput.split(RegExp(r'[+\-×÷]'));
+              final last = parts.isNotEmpty ? parts.last : '';
+              if (userInput == '0') {
+                userInput = v;
+              } else if (last == '0' && !last.contains('.')) {
+                userInput = userInput.substring(0, userInput.length - 1) + v;
+              } else {
+                userInput += v;
+              }
+            } else if (ops.contains(v)) {
+              if (userInput.isEmpty && v != '-') return;
+              if (ops.contains(userInput.characters.last)) {
+                userInput = userInput.substring(0, userInput.length - 1);
+              }
+              userInput += v;
+            }
         }
-        _currentInput = _output;
-        _num1 = result;
-        _operator = '';
+        _updateResult();
       });
+
+  void _updateResult() {
+    if (userInput.isEmpty ||
+        !ops.any(userInput.contains) ||
+        ops.contains(userInput.characters.last)) {
+      result = '';
+      return;
+    }
+    try {
+      final exp = ShuntingYardParser()
+          .parse(userInput.replaceAll('×', '*').replaceAll('÷', '/'));
+      final val = RealEvaluator().evaluate(exp);
+      result = val % 1 == 0 ? val.toInt().toString() : val.toString();
+    } catch (_) {
+      result = '';
     }
   }
 
-  Widget _buildButton(String buttonText) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
+  Widget _display(String t, double s) => Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.all(20),
+        child: Text(t, style: TextStyle(fontSize: s)),
+      );
+
+  Widget _button(String t) => Expanded(
         child: ElevatedButton(
-          onPressed: () => _buttonPressed(buttonText),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.all(20.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-          ),
-          child: Text(
-            buttonText,
-            style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
-          ),
+          onPressed: () => buttonPressed(t),
+          child: Text(t, style: const TextStyle(fontSize: 24)),
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _buttonRow(List<String> row) => Row(
+        children: [
+          for (int i = 0; i < row.length; i++) ...[
+            _button(row[i]),
+            if (i != row.length - 1) const SizedBox(width: 3),
+          ]
+        ],
+      );
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(20.0),
-              alignment: Alignment.bottomRight,
-              child: Text(
-                _output,
-                style: const TextStyle(
-                  fontSize: 48.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const Divider(),
-          Column(
-            children: [
-              Row(
-                children: <Widget>[
-                  _buildButton('7'),
-                  _buildButton('8'),
-                  _buildButton('9'),
-                  _buildButton('/'),
+  Widget build(BuildContext context) => Scaffold(
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _display(userInput, 32),
+            _display(result, 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
+              child: Column(
+                children: [
+                  for (int i = 0; i < buttons.length; i++) ...[
+                    _buttonRow(buttons[i]),
+                    if (i != buttons.length - 1) const SizedBox(height: 3),
+                  ]
                 ],
               ),
-              Row(
-                children: <Widget>[
-                  _buildButton('4'),
-                  _buildButton('5'),
-                  _buildButton('6'),
-                  _buildButton('*'),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  _buildButton('1'),
-                  _buildButton('2'),
-                  _buildButton('3'),
-                  _buildButton('-'),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  _buildButton('C'),
-                  _buildButton('0'),
-                  _buildButton('='),
-                  _buildButton('+'),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            )
+          ],
+        ),
+      );
 }

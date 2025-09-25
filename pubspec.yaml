@@ -49,6 +49,7 @@ dependencies:
   firebase_messaging: ^16.0.1
   uuid: ^4.4.2
   firebase_storage: ^13.0.2
+  math_expressions: ^3.1.0
 
 dev_dependencies:
   flutter_test:
